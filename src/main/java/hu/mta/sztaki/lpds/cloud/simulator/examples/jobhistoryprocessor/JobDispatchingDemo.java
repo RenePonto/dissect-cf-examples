@@ -32,8 +32,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import hu.mta.sztaki.lpds.cloud.simulator.Timed;
 import hu.mta.sztaki.lpds.cloud.simulator.energy.powermodelling.PowerState;
@@ -74,28 +72,9 @@ import hu.mta.sztaki.lpds.cloud.simulator.util.PowerTransitionGenerator;
  *         MTA SZTAKI (c) 2012-5"
  */
 public class JobDispatchingDemo {
-	public static Thread mainThread;
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
-		new Thread() {
-			public void run() {
-				try {
-					sleep(60*60*1000);
-				} catch (InterruptedException e) {
-					
-				}
-				System.err.println("Terminated because of a timeout!");
-				System.exit(-1);
-			};
-		}.start();
-		mainThread=Thread.currentThread();
-		// Allows repeated execution
-		Timed.resetTimed();
-		if (!MultiIaaSJobDispatcher.verbosity) {
-			Logger.getGlobal().setLevel(Level.OFF);
-		}
-
 		// The help
 		if (args.length < 2) {
 			System.out.println("Expected parameters:");
@@ -351,7 +330,7 @@ public class JobDispatchingDemo {
 		}
 		long beforeSimu = Calendar.getInstance().getTimeInMillis();
 		System.err.println(
-				"Job dispatcher (with " + dispatcher.jobs.length + " jobs) is completely prepared at " + beforeSimu);
+				"Job dispatcher (with " + dispatcher.jobs.length + " jobs)  is completely prepared at " + beforeSimu);
 		// Moving the simulator's time just before the first event would come
 		// from the dispatcher
 		Timed.skipEventsTill(dispatcher.getMinsubmittime() * 1000);
@@ -382,23 +361,9 @@ public class JobDispatchingDemo {
 		System.err.println("Current simulation time: " + Timed.getFireCount());
 		System.err.println("Simulated timespan: " + (Timed.getFireCount() - dispatcher.getMinsubmittime() * 1000));
 		System.err.println("Final number of: Ignored jobs - " + dispatcher.getIgnorecounter() + " Destroyed VMs - "
-				+ dispatcher.getDestroycounter());
-
+				+ dispatcher.getDestroycounter() + " reused VMs: "+ dispatcher.reuseCounter);
 		if (consolidator != null) {
-			if (Consolidator.consolidationRuns != 0) {
-				System.err.println("Total migrations done: " + SimpleConsolidator.migrationCount);
-				System.err.println("Number of consolidation runs: " + Consolidator.consolidationRuns);
-				System.err.println(
-						"Consolidator performance: " + duration / Consolidator.consolidationRuns + " ms/consolidation");
-			} else {
-				System.err.println("There were no consolidation runs!");
-			}
-		}
-		if (doMonitoring) {
-			System.err.println("Average number of PMs in running state: " + StateMonitor.averageRunningPMs);
-			System.err.println(
-					"Maximum number of running PMs during the whole simulation: " + StateMonitor.maxRunningPMs);
-
+			System.err.println("Total migrations done: " + SimpleConsolidator.migrationCount);
 		}
 		long vmcount = 0;
 		for (IaaSService lociaas : iaasList) {
